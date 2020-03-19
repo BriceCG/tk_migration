@@ -114,7 +114,7 @@ def validation(event):
         valide = Button(frame_bar_1, text="Voir")
         group_input= Listbox(frame_bar_1,width=35,bg="white",fg="black")
         def base(event):
-            user_input.delete(0, END)
+            group_input.delete(0, END)
             if choice.get() == db_input.get():
                 data_db = base_input.cursor()
                 data_db.execute("SELECT * FROM res_groups_users_rel ORDER BY uid")
@@ -128,6 +128,8 @@ def validation(event):
                             pass
                         else:
                             user_.append(us)
+                            user_input.delete(0, END)
+                            group_input.delete(0, END)
                 for user in user_:
                     data_db.execute(f"SELECT login,partner_id FROM res_users WHERE id = {user}")
                     res = data_db.fetchone()
@@ -139,38 +141,42 @@ def validation(event):
                     group_user = {}
                     group_id = []
                     name = name[0]+f" [ {user} ]"
-                    user_input['values'] += (str(name),)
+                    if name in user_input['values']:
+                        pass
+                    else:
+                        user_input['values'] += (str(name),)
                 
                 valide.focus()
                 user_input.pack()
 
                 def view_access(*args):
-                    if user_in.get() != "":
-                        name= user_in.get()
-                        user= name[-5:-2]
-                        user= user.replace("[","")
-                        user= user.strip()
-                    i=0
                     group_input.delete(0, END)
-                    for group in data_res:
-                        if group[1] == user:
-                            group_id.append(str(group[0]))
-                            group_user[name] = group_id
-                            group_input.insert(i, group)
-                            i+=1
-                    for name,groups in group_user.items():
-                        for group in groups:
-                            data_db.execute(f"SELECT name FROM res_groups WHERE id = {group}")
-                            group_name = data_db.fetchone()
-                            group_name = f"[ id => {group}] "+group_name[0]
-                            print(group)
+                    if group_input.get(END) == "":
+                        if user_in.get() != "":
+                            name= user_in.get()
+                            user= name[-5:-2]
+                            user= user.replace("[","")
+                            user= int(user.strip())
+                        
+                        for group in data_res:
+                            if group[1] == user:
+                                group_id.append(str(group[0]))
+                                group_user[name] = group_id
+                                
+                        for name,groups in group_user.items():
+                            for group in groups:
+                                data_db.execute(f"SELECT name FROM res_groups WHERE id = {group}")
+                                group_name = data_db.fetchone()
+                                group_name = f"[ id => {group}] "+group_name[0]
+                                group_input.insert(END, group_name)
+                    else:
+                        group_input.delete(0, END)
 
                 valide.bind('<Button-1>',view_access)
                 group_input.pack(pady=10)
                 valide.pack(pady=10)
 
             elif choice.get() == db_output.get():
-                user_input.set('')
                 data_db = base_output.cursor()
                 data_db.execute("SELECT * FROM res_groups_users_rel ORDER BY uid")
                 data_res = data_db.fetchall()
@@ -183,6 +189,7 @@ def validation(event):
                             pass
                         else:
                             user_.append(us)
+
                 for user in user_:
                     data_db.execute(f"SELECT login,partner_id FROM res_users WHERE id = {user}")
                     res = data_db.fetchone()
@@ -194,7 +201,11 @@ def validation(event):
                     group_user = {}
                     group_id = []
                     name = name[0]+f" [ {user} ]"
-                    user_input['values'] += (str(name),)
+                    if name in user_input['values']:
+                        pass
+                    else:
+                        user_input['values'] += (str(name),)
+
                     for group in data_res:
                         if group[1] == user:
                             group_id.append(str(group[0]))
@@ -203,24 +214,26 @@ def validation(event):
                 user_input.pack()
 
                 def view_access(event):
-                    if user_in.get() != "":
-                        name= user_in.get()
-                        user= name[-5:-2]
-                        user= user.replace("[","")
-                        user= user.strip()
-                    i=0
                     group_input.delete(0, END)
-                    for group in data_res:
-                        if group[1] == user:
-                            group_id.append(str(group[0]))
-                            group_user[name] = group_id
-                            group_input.insert(i, group)
-                            i+=1
-                    for name,groups in group_user.items():
-                        for group in groups:
-                            data_db.execute(f"SELECT name FROM res_groups WHERE id = {group}")
-                            group_name = data_db.fetchone()
-                            group_name = f"[ id => {group}] "+group_name[0]
+                    if group_input.get(END) == "":
+                        if user_in.get() != "":
+                            name= user_in.get()
+                            user= name[-5:-2]
+                            user= user.replace("[","")
+                            user= int(user.strip())
+                        
+                        for group in data_res:
+                            if group[1] == user:
+                                group_id.append(str(group[0]))
+                                group_user[name] = group_id
+                                
+                        for name,groups in group_user.items():
+                            for group in groups:
+                                data_db.execute(f"SELECT name FROM res_groups WHERE id = {group}")
+                                group_name = data_db.fetchone()
+                                group_name = f"[ id => {group}] "+group_name[0]
+                                group_input.insert(END, group_name)
+
 
                 valide.bind('<Button-1>',view_access)
                 group_input.pack(pady=10)
@@ -228,10 +241,12 @@ def validation(event):
 
         def base_choice(event):
             main_frame.pack_forget()
+            user_input.delete(0, END)
+            group_input.delete(0, END)
             label= Label(frame_bar_1,text="Nom d'utilisateur",bg="white",fg="black").pack(pady=10)
             user_input['values'] = ""
                 
-            user_input.bind('<Enter>',base)
+            user_input.bind('<Button-1>',base)
             user_input.pack()
             valide.pack(pady=10)
             main_frame.focus()
@@ -247,6 +262,10 @@ def validation(event):
         main_frame.pack(fill=BOTH,expand=TRUE)
         bdd_frame.place(x=13,y=13)
         
+        #onglet 2 (Migration droit)
+        btn = Button(frame_bar_2,text="teste").pack()
+
+
     except Exception as e:
         messagebox.showerror("Connexion echouer",e)
 
