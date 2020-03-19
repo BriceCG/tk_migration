@@ -114,7 +114,6 @@ def validation(event):
         valide = Button(frame_bar_1, text="Voir")
         group_input= Listbox(frame_bar_1,width=35,bg="white",fg="black")
         def base(event):
-            group_input.delete(0, END)
             if choice.get() == db_input.get():
                 data_db = base_input.cursor()
                 data_db.execute("SELECT * FROM res_groups_users_rel ORDER BY uid")
@@ -150,7 +149,6 @@ def validation(event):
                 user_input.pack()
 
                 def view_access(*args):
-                    group_input.delete(0, END)
                     if group_input.get(END) == "":
                         if user_in.get() != "":
                             name= user_in.get()
@@ -169,8 +167,6 @@ def validation(event):
                                 group_name = data_db.fetchone()
                                 group_name = f"[ id => {group}] "+group_name[0]
                                 group_input.insert(END, group_name)
-                    else:
-                        group_input.delete(0, END)
 
                 valide.bind('<Button-1>',view_access)
                 group_input.pack(pady=10)
@@ -214,7 +210,6 @@ def validation(event):
                 user_input.pack()
 
                 def view_access(event):
-                    group_input.delete(0, END)
                     if group_input.get(END) == "":
                         if user_in.get() != "":
                             name= user_in.get()
