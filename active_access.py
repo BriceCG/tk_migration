@@ -185,6 +185,8 @@ def validation(event):
                             pass
                         else:
                             user_.append(us)
+                            user_input.delete(0, END)
+                            group_input.delete(0, END)
 
                 for user in user_:
                     data_db.execute(f"SELECT login,partner_id FROM res_users WHERE id = {user}")
