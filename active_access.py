@@ -253,23 +253,6 @@ def migration(*args):
     th.start()
 
 def validation(*args):
-    base= connect("data")
-    data_save= base.cursor()
-    data_save.execute("SELECT * FROM log_info")
-    log= data_save.fetchone()
-    if log == None:
-        try:
-            data_save.execute(f"INSERT INTO log_info VALUES (1,'{db_input.get()}','{db_input_user.get()}','{db_input_pass.get()}','{db_output.get()}','{db_output_user.get()}','{db_output_pass.get()}')")
-            base.commit()
-        except Exception as e:
-            messagebox.showerror("Log file error",e)
-    else:
-        db_input.set(log[1])
-        db_input_user.set(log[2])
-        db_input_pass.set(log[3])
-        db_output.set(log[4])
-        db_output_user.set(log[5])
-        db_output_pass.set(log[6])
     try:
         global base_input
         global base_output
@@ -497,7 +480,23 @@ def validation(*args):
         global btn1
         btn1 = Button(frame_bar_3, text="Migrer les données", command=migration_ir)
         btn1.pack(pady=30)
-
+        base= connect("data")
+        data_save= base.cursor()
+        data_save.execute("SELECT * FROM log_info")
+        log= data_save.fetchone()
+        if log == None:
+            try:
+                data_save.execute(f"INSERT INTO log_info VALUES (1,'{db_input.get()}','{db_input_user.get()}','{db_input_pass.get()}','{db_output.get()}','{db_output_user.get()}','{db_output_pass.get()}')")
+                base.commit()
+            except Exception as e:
+                messagebox.showerror("Log file error",e)
+        else:
+            db_input.set(log[1])
+            db_input_user.set(log[2])
+            db_input_pass.set(log[3])
+            db_output.set(log[4])
+            db_output_user.set(log[5])
+            db_output_pass.set(log[6])
     except Exception as e:
         messagebox.showerror("Connexion echouer", e)
 
