@@ -1,10 +1,14 @@
 from window import *
+from sqlite3 import *
 import psycopg2
 
 data_connect_window = fenetre()
 data_connect_window.create("Connectez vous au base de donnée", 600, 350)
 data_connect_window = data_connect_window.fen
 # variable
+global base
+base= connect("data")
+data_save= base.cursor()
 
 db_input = StringVar()
 db_input_user = StringVar()
@@ -13,7 +17,7 @@ db_input_pass = StringVar()
 db_output = StringVar()
 db_output_user = StringVar()
 db_output_pass = StringVar()
-
+i=0
 user_in = StringVar()
 # frame
 
@@ -65,6 +69,8 @@ frame_in.pack()
 
 
 def logout(*args):
+    data_save.execute("DELETE FROM log_info WHERE id=1")
+    base.commit()
     data_connect_window.config(menu=NONE)
     connect_frame.pack(fill=BOTH, expand=TRUE)
     main_frame.forget()
@@ -89,78 +95,105 @@ def onglet_2(event):
 
 
 def migration(*args):
-    cursor = base_input.cursor()
-    cursor.execute("""SELECT DISTINCT gid FROM res_groups_users_rel """)
-    result = cursor.fetchall()
-    names8 = []
-    id8 = [x[0] for x in result]
-    for ident in id8:
-        cursor.execute(f"""SELECT name from res_groups where id = {ident} """)
-        result = cursor.fetchone()
-        name = result[0]
-        if "'" in name:
-            name = name.replace("'", "''")
-        names8.append(name)
+    btn.pack_forget()
+    it=0
+    info= Label(text=f"Veuillez patienter svp! {it} ms")
+    info.pack(pady=30)
+    def load_migration():
+        cursor = base_input.cursor()
+        cursor.execute("""SELECT DISTINCT gid FROM res_groups_users_rel """)
+        result = cursor.fetchall()
+        names8 = []
+        id8 = [x[0] for x in result]
+        for ident in id8:
+            cursor.execute(f"""SELECT name from res_groups where id = {ident} """)
+            result = cursor.fetchone()
+            name = result[0]
+            if "'" in name:
+                name = name.replace("'", "''")
+            names8.append(name)
 
-    cursor2 = base_output.cursor()
-    id12 = []
-    for name in names8:
-        cursor2.execute(
-            f"""SELECT id FROM res_groups WHERE name = '{name}' """)
-        id = cursor2.fetchone()
-        id = id[0]
-        id12.append(id)
+        cursor2 = base_output.cursor()
+        id12 = []
+        for name in names8:
+            cursor2.execute(
+                f"""SELECT id FROM res_groups WHERE name = '{name}' """)
+            id = cursor2.fetchone()
+            id = id[0]
+            id12.append(id)
 
-    groups_users = []
+        groups_users = []
 
 
-    cursor.execute(f""" SELECT DISTINCT uid FROM res_groups_users_rel """)
-    users_id = cursor.fetchall()
-    for user_id in users_id:
-        user_id = user_id[0]
-        obj = {}
-        obj['user'] = user_id
-        cursor.execute(
-            f"""SELECT gid FROM res_groups_users_rel WHERE uid = {user_id} """)
-        groups_id = cursor.fetchall()
-        newResult = []
-        for group_id in groups_id:
-            newResult.append(group_id[0])
-        obj['groups'] = newResult
-        groups_users.append(obj)
-
-    for ligne in groups_users:
-        if ligne['user'] == 1:
-            ligne['user'] = 2
-        else:
-            ligne['user'] += 5
-        for group in ligne['groups']:
-            try:
-                index = id8.index(group)
-                cursor2.execute(
-                    "INSERT INTO res_groups_users_rel VALUES (%s,%s)", (id12[index], ligne['user']))
-                print(
-                    f"""INSERT INTO res_groups_users_rel VALUES ({id12[index]},{ligne['user']})""")
-            except psycopg2.IntegrityError:
-                base_output.rollback()
+        cursor.execute(f""" SELECT DISTINCT uid FROM res_groups_users_rel """)
+        users_id = cursor.fetchall()
+        for user_id in users_id:
+            user_id = user_id[0]
+            obj = {}
+            obj['user'] = user_id
+            cursor.execute(
+                f"""SELECT gid FROM res_groups_users_rel WHERE uid = {user_id} """)
+            groups_id = cursor.fetchall()
+            newResult = []
+            for group_id in groups_id:
+                newResult.append(group_id[0])
+            obj['groups'] = newResult
+            groups_users.append(obj)
+        it=0
+        for ligne in groups_users:
+            if ligne['user'] == 1:
+                ligne['user'] = 2
             else:
-                base_output.commit()
-
-            cursor2.execute(f"""SELECT DISTINCT uid from res_groups_users_rel""")
-            uid = cursor2.fetchall()
-            for id_user in uid:
-                id_user = id_user[0]
+                ligne['user'] += 5
+            
+            for group in ligne['groups']:
+                it+=1
+                info["text"] = f"Veuillez patienter svp! {it} ms"
                 try:
+                    index = id8.index(group)
                     cursor2.execute(
-                        "INSERT INTO res_groups_users_rel VALUES(%s,%s)", (1, id_user))
+                        "INSERT INTO res_groups_users_rel VALUES (%s,%s)", (id12[index], ligne['user']))
                 except psycopg2.IntegrityError:
                     base_output.rollback()
                 else:
                     base_output.commit()
 
-def validation(event):
+                cursor2.execute(f"""SELECT DISTINCT uid from res_groups_users_rel""")
+                uid = cursor2.fetchall()
+                for id_user in uid:
+                    id_user = id_user[0]
+                    try:
+                        cursor2.execute(
+                            "INSERT INTO res_groups_users_rel VALUES(%s,%s)", (1, id_user))
+                    except psycopg2.IntegrityError:
+                        base_output.rollback()
+                    else:
+                        base_output.commit()
+        messagebox.showinfo("Felicitation","Migration terminé sans erreur")
+        info.pack_forget()
+        btn.pack(pady=30)
 
-    
+    th= Thread(target=load_migration)
+    th.start()
+
+def validation(*args):
+    base= connect("data")
+    data_save= base.cursor()
+    data_save.execute("SELECT * FROM log_info")
+    log= data_save.fetchone()
+    if log == None:
+        try:
+            data_save.execute(f"INSERT INTO log_info VALUES (1,'{db_input.get()}','{db_input_user.get()}','{db_input_pass.get()}','{db_output.get()}','{db_output_user.get()}','{db_output_pass.get()}')")
+            base.commit()
+        except Exception as e:
+            messagebox.showerror("Log file error",e)
+    else:
+        db_input.set(log[1])
+        db_input_user.set(log[2])
+        db_input_pass.set(log[3])
+        db_output.set(log[4])
+        db_output_user.set(log[5])
+        db_output_pass.set(log[6])
     try:
         global base_input
         global base_output
@@ -182,7 +215,7 @@ def validation(event):
         # creation menu
         global main_menu
         main_menu = Menu(data_connect_window, bg="white", fg="black", relief=FLAT,
-                         activebackground="white", activeforeground="black", font=("Arial", 9))
+                        activebackground="white", activeforeground="black", font=("Arial", 9))
         sub_menu = Menu(main_menu, tearoff=0, bg="white", fg="black", relief=FLAT,
                         activebackground="grey", activeforeground="black", font=("Arial", 9))
         sub_menu.add_command(label="Changer de base de donnée", command=logout)
@@ -195,10 +228,10 @@ def validation(event):
         global bar_1
         global bar_2
         bar_1 = Button(frame_bar, text="Verification droit", width=36, highlightthickness=0, relief=FLAT,
-                       background="white", fg="black", activebackground="white", activeforeground="black")
+                    background="white", fg="black", activebackground="white", activeforeground="black")
         bar_1.bind('<Button-1>', onglet_1)
         bar_2 = Button(frame_bar, text="Migration droit", width=36, highlightthickness=0,
-                       relief=FLAT, activebackground="grey", activeforeground="black")
+                    relief=FLAT, activebackground="grey", activeforeground="black")
         bar_2.bind('<Button-1>', onglet_2)
         bar_1.pack(side=LEFT, anchor=NW)
         bar_2.pack(side=LEFT, anchor=NE)
@@ -354,7 +387,7 @@ def validation(event):
             user_input.delete(0, END)
             group_input.delete(0, END)
             label = Label(frame_bar_1, text="Nom d'utilisateur",
-                          bg="white", fg="black").pack(pady=10)
+                        bg="white", fg="black").pack(pady=10)
             user_input['values'] = ""
 
             user_input.bind('<Button-1>', base)
@@ -362,7 +395,7 @@ def validation(event):
             valide.pack(pady=10)
             main_frame.focus()
             label_ = Label(frame_bar_1, text="Droit d'access",
-                           bg="white", fg="black").pack()
+                        bg="white", fg="black").pack()
             group_input.pack(pady=10)
             main_frame.pack(fill=BOTH, expand=TRUE)
 
@@ -375,24 +408,29 @@ def validation(event):
         bdd_frame.place(x=13, y=13)
 
         # onglet 2 (Migration droit)
-        btn = Button(frame_bar_2, text="Migrer les données", command=migration).pack(pady=30)
+        global btn
+        btn = Button(frame_bar_2, text="Migrer les données", command=migration)
+        btn.pack(pady=30)
 
     except Exception as e:
         messagebox.showerror("Connexion echouer", e)
 
 # Bouton de validation
 
+data_save.execute("SELECT * FROM log_info")
+log= data_save.fetchone()
+if log == None:
+    frame_validate = Frame(connect_frame, bg="white")
+    btn_validate = tkinter_pro.Button(frame_validate, text="Connect",command=validation)
+    btn_validate.grid(row=0, column=0, ipadx=4, ipady=4)
+    btn_quit = tkinter_pro.Button(frame_validate, text="Quitter", command=data_connect_window.quit).grid(
+        row=0, column=1, ipadx=4, ipady=4)
+    frame_validate.pack()
 
-frame_validate = Frame(connect_frame, bg="white")
-btn_validate = tkinter_pro.Button(frame_validate, text="Connect")
-btn_validate.bind('<Button-1>', validation)
-btn_validate.grid(row=0, column=0, ipadx=4, ipady=4)
-btn_quit = tkinter_pro.Button(frame_validate, text="Quitter", command=data_connect_window.quit).grid(
-    row=0, column=1, ipadx=4, ipady=4)
-frame_validate.pack()
+    # frame
 
-# frame
-
-connect_frame.pack(fill=BOTH, expand=TRUE)
+    connect_frame.pack(fill=BOTH, expand=TRUE)
+else:
+    validation()
 
 data_connect_window.mainloop()
