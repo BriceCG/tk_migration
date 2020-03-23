@@ -111,8 +111,64 @@ def onglet_3(event):
     bar_3.config(bg="white", fg="black", activebackground="white",
                  activeforeground="black")
 def migration_ir(*args):
-    # ato elah no mampiditra code
-    pass
+    cursor = base_input.cursor()
+    # get mim8 column names
+    cursor.execute("Select * FROM ir_attachment where id = 101")
+    colnames = [desc[0] for desc in cursor.description]
+    
+    cursor2 = base_output.cursor()
+    # get id from mim8 ir_attachment
+    cursor.execute("SELECT id FROM ir_attachment")
+    ids = cursor.fetchall()
+
+    # loop all ids
+    for ident in ids:
+        # get the rest of column in with the current id
+        ident = ident[0]
+        cursor.execute(f"SELECT * FROM ir_attachment WHERE id ={ident}")
+        ir_attachment = cursor.fetchall()
+        for line in ir_attachment:
+            obj = {}
+            for k, v in zip(colnames, line):
+                obj[k] = v
+        # id
+        obj['id'] = int(obj['id'])
+        obj['id'] += 449
+
+        # res_id
+        if obj['res_id'] != None:
+            obj['res_id'] = int(obj['res_id'])
+
+        # company_id
+        obj['company_id'] = int(obj['company_id'])
+
+        # file_size
+        obj['file_size'] = int(obj['file_size'])
+
+        # create_uid
+        if obj['create_uid'] != None:
+            obj['create_uid'] = int(obj['create_uid'])
+            if(obj['create_uid'] == 1):
+                obj['create_uid'] = 2
+            else:
+                obj['create_uid'] +=5
+            
+        # write_uid
+        if obj['write_uid'] != None:
+            obj['write_uid'] = int(obj['write_uid'])
+            if(obj['write_uid'] == 1):
+                obj['write_uid'] = 2
+            else:
+                obj['write_uid'] +=5
+
+        query = "INSERT INTO ir_attachment VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        values = (obj['id'], obj['name'], obj['datas_fname'], obj['description'], obj['res_name'], obj['res_model'], None, None, obj['res_id'], obj['company_id'], obj['type'], obj['url'], 'False', None, obj['db_datas'], obj['store_fname'], obj['file_size'], None, None, obj['index_content'],False, obj['create_uid'], obj['create_date'], obj['write_uid'], obj['write_date'])
+        try:
+            cursor2.execute(query,values)
+        except psycopg2.IntegrityError:
+            base_output.rollback()
+        else:
+            base_output.commit()
 
 def migration(*args):
     btn.pack_forget()
