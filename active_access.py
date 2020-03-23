@@ -26,6 +26,7 @@ main_frame = Frame(data_connect_window, bg="white")
 frame_bar = Frame(main_frame, bg="white")
 frame_bar_1 = Frame(main_frame, bg="white")
 frame_bar_2 = Frame(main_frame, bg="white")
+frame_bar_3 = Frame(main_frame, bg="white")
 
 # Connection base de donnée input
 
@@ -78,21 +79,40 @@ def logout(*args):
 
 def onglet_1(event):
     frame_bar_2.forget()
+    frame_bar_3.forget()
     frame_bar_1.pack(fill=BOTH, expand=TRUE)
     bar_1.config(bg="white", fg="black", activebackground="white",
                  activeforeground="black")
     bar_2.config(bg="black", fg="white", activebackground="grey",
                  activeforeground="white")
+    bar_2.config(bg="black", fg="white", activebackground="white",
+                 activeforeground="black")
 
 
 def onglet_2(event):
     frame_bar_1.forget()
+    frame_bar_3.forget()
     frame_bar_2.pack(fill=BOTH, expand=TRUE)
     bar_1.config(bg="black", fg="white", activebackground="grey",
                  activeforeground="white")
     bar_2.config(bg="white", fg="black", activebackground="white",
                  activeforeground="black")
+    bar_3.config(bg="black", fg="white", activebackground="white",
+                 activeforeground="black")
 
+def onglet_3(event):
+    frame_bar_1.forget()
+    frame_bar_2.forget()
+    frame_bar_3.pack(fill=BOTH, expand=TRUE)
+    bar_1.config(bg="black", fg="white", activebackground="grey",
+                 activeforeground="white")
+    bar_2.config(bg="black", fg="white", activebackground="white",
+                 activeforeground="black")
+    bar_3.config(bg="white", fg="black", activebackground="white",
+                 activeforeground="black")
+def migration_ir(*args):
+    # ato elah no mampiditra code
+    pass
 
 def migration(*args):
     btn.pack_forget()
@@ -227,14 +247,19 @@ def validation(*args):
 
         global bar_1
         global bar_2
-        bar_1 = Button(frame_bar, text="Verification droit", width=36, highlightthickness=0, relief=FLAT,
+        global bar_3
+        bar_1 = Button(frame_bar, text="Verification droit", width=20, highlightthickness=0, relief=FLAT,
                     background="white", fg="black", activebackground="white", activeforeground="black")
         bar_1.bind('<Button-1>', onglet_1)
-        bar_2 = Button(frame_bar, text="Migration droit", width=36, highlightthickness=0,
+        bar_2 = Button(frame_bar, text="Migration droit", width=20, highlightthickness=0,
                     relief=FLAT, activebackground="grey", activeforeground="black")
         bar_2.bind('<Button-1>', onglet_2)
+        bar_3 = Button(frame_bar, text="Migration ir_attachment", width=20, highlightthickness=0,
+                    relief=FLAT, activebackground="grey", activeforeground="black")
+        bar_3.bind('<Button-1>', onglet_3)
         bar_1.pack(side=LEFT, anchor=NW)
-        bar_2.pack(side=LEFT, anchor=NE)
+        bar_2.pack(side=LEFT)
+        bar_3.pack(side=LEFT, anchor=NE)
         frame_bar.pack()
         frame_bar_1.pack(fill=BOTH, expand=TRUE)
 
@@ -411,6 +436,11 @@ def validation(*args):
         global btn
         btn = Button(frame_bar_2, text="Migrer les données", command=migration)
         btn.pack(pady=30)
+
+        # onglet 3 (Migtaion ir_attachment)
+        global btn1
+        btn1 = Button(frame_bar_3, text="Migrer les données", command=migration_ir)
+        btn1.pack(pady=30)
 
     except Exception as e:
         messagebox.showerror("Connexion echouer", e)
